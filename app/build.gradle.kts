@@ -82,4 +82,6 @@ dependencies {
     implementation(libs.androidx.camera.video)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.extensions)
+
+    testImplementation("io.mockk:mockk:1.13.10")
 }
