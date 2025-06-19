@@ -26,7 +26,7 @@ class AndroidLocationObserver @Inject constructor(
 
     private val client = LocationServices.getFusedLocationProviderClient(context)
 
-    override fun obvserverLocation(interval: Long): Flow<Location> {
+    override fun observeLocation(interval: Long): Flow<Location> {
         return callbackFlow {
             // verificar que la red y la localizacion esten activar
             val locationManager = context.getSystemService<LocationManager>()!!

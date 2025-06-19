@@ -2,7 +2,7 @@ package com.mario8a.trackerapp.domain.location
 
 import kotlin.math.roundToInt
 
-class LocationCalculations {
+object LocationCalculations {
 
     fun getTotalDistanceMeters(locations: List<List<LocationWithTimestamp>>):Int {
         return locations
