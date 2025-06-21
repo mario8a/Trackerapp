@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
@@ -22,7 +23,9 @@ import com.mario8a.trackerapp.domain.Timer
 import com.mario8a.trackerapp.domain.location.Location
 import com.mario8a.trackerapp.domain.location.LocationObserver
 import com.mario8a.trackerapp.domain.location.LocationTracke
+import com.mario8a.trackerapp.presentation.maps.MapScreenRoot
 import com.mario8a.trackerapp.presentation.maps.MapsSection
+import com.mario8a.trackerapp.presentation.maps.TrackingMapViewModel
 
 import com.mario8a.trackerapp.ui.theme.TrackerappTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -46,22 +49,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
-        locationTracker.locationData
-            .onEach {
-                Log.d("LocatiionData", it.toString())
-            }
-            .launchIn(lifecycleScope)
-
-        lifecycleScope.launch {
-            delay(2000)
-            locationTracker.startObservingLocation()
-            locationTracker.setIsTracking(true)
-            delay(5000)
-            locationTracker.stopObservingLocation()
-        }
-
-
         setContent {
             val navController = rememberNavController()
             TrackerappTheme {
@@ -73,9 +60,10 @@ class MainActivity : ComponentActivity() {
                             startDestination = MapScreenDes
                         ){
                             composable<MapScreenDes> (){
-                                MapsSection(
-                                    modifier = Modifier.fillMaxSize()
-                                )
+                                val viewModel = hiltViewModel<TrackingMapViewModel>()
+                                MapScreenRoot(
+                                    trackingViewModel = viewModel
+                                ) { }
                             }
 
                             composable<CameraScreenDes> {

@@ -14,11 +14,9 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.zip
-import javax.inject.Inject
 import kotlin.time.Duration
-import com.mario8a.trackerapp.domain.location.LocationCalculations
 
-class LocationTracke (
+class LocationTracke(
     private val locationObserver: LocationObserver,
     private val applicationScope: CoroutineScope,
 ) {
@@ -60,7 +58,7 @@ class LocationTracke (
     val currentLocation = isObservingLocation
 
         .flatMapLatest { isObservingLocation ->
-            if(isObservingLocation) {
+            if (isObservingLocation) {
                 locationObserver.observeLocation(1000L)
             } else {
                 flowOf()
@@ -76,18 +74,20 @@ class LocationTracke (
     init {
         _isTracking
             .onEach { isTracking ->
-                if(!isTracking) {
+                if (!isTracking) {
                     val newList = buildList {
                         addAll(locationData.value.locations)
                         add(emptyList<LocationWithTimestamp>())
                     }.toList()
-                    _locationData.update { it.copy(
-                        locations = newList
-                    ) }
+                    _locationData.update {
+                        it.copy(
+                            locations = newList
+                        )
+                    }
                 }
             }
             .flatMapLatest { isTracking ->
-                if(isTracking) {
+                if (isTracking) {
                     Timer.timeAndEmits()
                 } else flowOf()
             }
@@ -102,7 +102,7 @@ class LocationTracke (
         currentLocation
             .filterNotNull()
             .combineTransform(_isTracking) { location, isTracking ->
-                if(isTracking) {
+                if (isTracking) {
                     emit(location)
                 }
             }
@@ -115,7 +115,7 @@ class LocationTracke (
             .onEach { location ->
 
                 val currentLocations = locationData.value.locations
-                val lastLocationsList = if(currentLocations.isNotEmpty()) {
+                val lastLocationsList = if (currentLocations.isNotEmpty()) {
                     currentLocations.last() + location
                 } else {
                     listOf(location)
@@ -139,7 +139,7 @@ class LocationTracke (
 }
 
 private fun <T> List<List<T>>.replaceLast(replacement: List<T>): List<List<T>> {
-    if(this.isEmpty()) {
+    if (this.isEmpty()) {
         return listOf(replacement)
     }
     return this.dropLast(1) + listOf(replacement)

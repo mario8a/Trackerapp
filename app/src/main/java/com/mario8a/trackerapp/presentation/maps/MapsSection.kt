@@ -13,6 +13,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,27 +24,49 @@ import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapEffect
 import com.google.maps.android.compose.MarkerComposable
+import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberUpdatedMarkerState
+import com.mario8a.trackerapp.domain.location.Location
+import com.mario8a.trackerapp.domain.location.LocationWithTimestamp
 
-val latLngArray = listOf(
-    LatLng(4.6547591408952185, -74.05578687079682),
-    LatLng(4.656732, -74.057851),
-    LatLng(4.668311, -74.074094),
-)
 
 @Composable
 fun MapsSection(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    currentLocation: Location?,
+    isTrackingFinished: Boolean,
+    locations: List<List<LocationWithTimestamp>>
 ) {
     val activity = LocalActivity.current
-    val marker = rememberUpdatedMarkerState()
-    LaunchedEffect(true) {
-        marker.position = LatLng(
-            4.6547591408952185, -74.05578687079682
+
+    val cameraPositionState = rememberCameraPositionState()
+
+    val markerPosition = remember(currentLocation) {
+        LatLng(
+            (currentLocation?.lat?.toFloat()?:0f).toDouble(),
+            (currentLocation?.long?.toFloat()?:0f).toDouble(),
         )
     }
 
+    val marker = rememberUpdatedMarkerState(markerPosition)
+
+    LaunchedEffect(true) {
+        if(currentLocation != null && !isTrackingFinished) {
+            val latlng = LatLng(
+                currentLocation.lat,
+                currentLocation.long
+            )
+            cameraPositionState.animate(
+                CameraUpdateFactory.newLatLngZoom(
+                    latlng,
+                    17f
+                )
+            )
+        }
+    }
+
     GoogleMap(
+        cameraPositionState = cameraPositionState,
         modifier = modifier,
         onMapLoaded = {
             Toast.makeText(
@@ -54,26 +77,11 @@ fun MapsSection(
         }
     ) {
 
-        MapEffect(latLngArray) { map ->
-            val boundariesBuilder = LatLngBounds.builder()
+//        MapEffect() { map ->
+//
+//        }
 
-            latLngArray.forEach { latlng ->
-                boundariesBuilder.include(
-                    latlng
-                )
-            }
-
-            map.moveCamera(
-                CameraUpdateFactory.newLatLngBounds(
-                    boundariesBuilder.build(),
-                    100
-                )
-            )
-        }
-
-        PolylinesSection(
-            latLngArray = latLngArray
-        )
+        PolylinesSection(locations)
         MarkerComposable(
             state = marker
         ) {
