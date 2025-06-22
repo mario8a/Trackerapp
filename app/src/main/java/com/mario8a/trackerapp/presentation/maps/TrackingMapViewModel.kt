@@ -107,6 +107,22 @@ class TrackingMapViewModel @Inject constructor (
                     shouldTrack.value = true
                     locationTracker.setIsTracking(true)
                 }
+
+                is TrackingIntent.SubmitLocationPermissionInfo -> {
+                    hasLocationPermission.value = intent.acceptedLocationPermission
+                    updateState {
+                        it.copy(
+                            showLocationRationale = intent.showLocationRationale
+                        )
+                    }
+                }
+                is TrackingIntent.SubmitNotificationPermissionInfo -> {
+                    updateState {
+                        it.copy(
+                            showNotificationRationale = intent.showNotificationRationale
+                        )
+                    }
+                }
             }
         }
 

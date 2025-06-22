@@ -1,5 +1,9 @@
 package com.mario8a.trackerapp.presentation.maps
 
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,13 +19,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.mario8a.trackerapp.presentation.utils.hasLocationPermission
+import com.mario8a.trackerapp.presentation.utils.hasNotificationPermission
+import com.mario8a.trackerapp.presentation.utils.shouldShowLocationRationalePermission
+import com.mario8a.trackerapp.presentation.utils.shouldShowNotificationRationalePermission
 
 @Composable
 fun MapScreenRoot(
     trackingViewModel: TrackingMapViewModel,
     navigateToCameraScreen: () -> Unit
-){
+) {
     val state by trackingViewModel.state.collectAsState()
 
     MapScreen(
@@ -34,23 +43,73 @@ fun MapScreenRoot(
 fun MapScreen(
     onAction: (TrackingIntent) -> Unit,
     state: TrackLocationState
-){
+) {
+    val context = LocalContext.current
+    val activity = LocalActivity.current as ComponentActivity
+
+    val permissionLauncherLocationsAndNotification = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { perms ->
+        val hasCourseLocationPermission = activity.hasLocationPermission()
+        val hasNotificationPermission = activity.hasNotificationPermission()
+
+        val showLocationRationale = activity.shouldShowLocationRationalePermission()
+        val showNotificationRationale = activity.shouldShowNotificationRationalePermission()
+
+        onAction(
+            TrackingIntent.SubmitLocationPermissionInfo(
+                acceptedLocationPermission = hasCourseLocationPermission,
+                showLocationRationale = showLocationRationale
+            )
+        )
+        onAction(
+            TrackingIntent.SubmitNotificationPermissionInfo(
+                acceptedNotificationPermission = hasNotificationPermission,
+                showNotificationRationale = showNotificationRationale
+            )
+        )
+    }
+
+    PermissionRationaleDialogs(
+        showLocationRationale = state.showLocationRationale,
+        showNotificationRationale = state.showNotificationRationale,
+        showCameraRationale = false,
+        onAccept = {
+
+        },
+        onDismiss = {
+            onAction(
+                TrackingIntent.SubmitLocationPermissionInfo(
+                    acceptedLocationPermission = context.hasLocationPermission(),
+                    showLocationRationale = false
+                )
+            )
+            onAction(
+                TrackingIntent.SubmitNotificationPermissionInfo(
+                    acceptedNotificationPermission = context.hasNotificationPermission(),
+                    showNotificationRationale = false
+                )
+            )
+        }
+    )
+
     Scaffold(
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    when{
+                    when {
                         state.isPaused -> {
                             onAction(TrackingIntent.ResumeTracking)
                         }
+
                         else -> {
                             onAction(TrackingIntent.PauseTrack)
                         }
                     }
                 }
             ) {
-                if(state.isPaused) {
+                if (state.isPaused) {
                     Image(
                         imageVector = Icons.Default.PlayArrow,
                         contentDescription = null,
@@ -70,7 +129,7 @@ fun MapScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-        ){
+        ) {
             MapsSection(
                 currentLocation = state.location,
                 isTrackingFinished = false,
