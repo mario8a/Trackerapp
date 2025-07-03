@@ -2,6 +2,7 @@ package com.mario8a.trackerapp.presentation.maps
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
@@ -26,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.mario8a.trackerapp.TrackitService
 import com.mario8a.trackerapp.presentation.utils.hasLocationPermission
 import com.mario8a.trackerapp.presentation.utils.hasNotificationPermission
 import com.mario8a.trackerapp.presentation.utils.shouldShowLocationRationalePermission
@@ -38,8 +40,8 @@ fun MapScreenRoot(
 ) {
     val state by trackingViewModel.state.collectAsState()
     LaunchedEffect(key1 = true) {
-        trackingViewModel.events.collect{ event->
-            when(event){
+        trackingViewModel.events.collect { event ->
+            when (event) {
                 is TrackingEvents.NavigateToCamera -> navigateToCameraScreen()
             }
         }
@@ -80,6 +82,14 @@ fun MapScreen(
                 showNotificationRationale = showNotificationRationale
             )
         )
+        if (context.hasLocationPermission()) {
+            val intent = Intent(activity, TrackitService::class.java).apply {
+                action = TrackitService.ACTION_START
+            }
+            if (!TrackitService.isServiceActive.value) {
+                activity.startService(intent)
+            }
+        }
     }
 
     PermissionRationaleDialogs(
@@ -90,14 +100,18 @@ fun MapScreen(
             permissionLauncherLocationAndNotifications.requestTrackingScreenPermissions(context)
         },
         onDismiss = {
-            onAction(TrackingIntent.SubmitLocationPermissionInfo(
-                acceptedLocationPermission = context.hasLocationPermission(),
-                showLocationRationale = false
-            ))
-            onAction(TrackingIntent.SubmitNotificationPermissionInfo(
-                acceptedNotificationPermission = context.hasNotificationPermission(),
-                showNotificationRationale = false
-            ))
+            onAction(
+                TrackingIntent.SubmitLocationPermissionInfo(
+                    acceptedLocationPermission = context.hasLocationPermission(),
+                    showLocationRationale = false
+                )
+            )
+            onAction(
+                TrackingIntent.SubmitNotificationPermissionInfo(
+                    acceptedNotificationPermission = context.hasNotificationPermission(),
+                    showNotificationRationale = false
+                )
+            )
         }
     )
 
@@ -124,8 +138,16 @@ fun MapScreen(
         }
 
         if (context.hasLocationPermission()) {
-            onAction(TrackingIntent.StartTracking)
-            onAction(TrackingIntent.ResumeTracking)
+
+            val intent = Intent(activity, TrackitService::class.java).apply {
+                action = TrackitService.ACTION_START
+            }
+            if (!TrackitService.isServiceActive.value) {
+                activity.startService(intent)
+            } else {
+                onAction(TrackingIntent.StartTracking)
+                onAction(TrackingIntent.ResumeTracking)
+            }
         }
 
     }
@@ -136,6 +158,18 @@ fun MapScreen(
             FloatingActionButton(
                 onClick = {
                     when {
+                        !state.isTracking -> {
+                            if (context.hasLocationPermission()) {
+                                val intent = Intent(activity, TrackitService::class.java).apply {
+                                    action = TrackitService.ACTION_START
+                                }
+                                if (!TrackitService.isServiceActive.value) {
+                                    activity.startService(intent)
+                                }
+                                onAction(TrackingIntent.StartTracking)
+                            }
+                        }
+
                         state.isPaused -> {
                             onAction(TrackingIntent.ResumeTracking)
                         }
@@ -191,7 +225,7 @@ private fun ActivityResultLauncher<Array<String>>.requestTrackingScreenPermissio
     )
 
     val notificationPermission = if (Build.VERSION.SDK_INT >= 33) {
-        arrayOf(android.Manifest.permission.POST_NOTIFICATIONS)
+        arrayOf(Manifest.permission.POST_NOTIFICATIONS)
     } else arrayOf()
 
     when {
