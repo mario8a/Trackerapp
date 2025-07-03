@@ -1,5 +1,7 @@
 package com.mario8a.trackerapp.presentation.maps
 
+import com.mario8a.trackerapp.domain.location.LocationWithTimestamp
+
 sealed interface TrackingIntent {
     data class SubmitLocationPermissionInfo(
         val  acceptedLocationPermission: Boolean,
@@ -14,5 +16,9 @@ sealed interface TrackingIntent {
     data object StartTracking : TrackingIntent
     data object PauseTrack : TrackingIntent
     data object ResumeTracking : TrackingIntent
-    companion object
+    data object GoToCamera: TrackingIntent
+
+    data class SelectLocation(val location: LocationWithTimestamp): TrackingIntent
+    data object DismissDialogLocation: TrackingIntent
+//    companion object
 }

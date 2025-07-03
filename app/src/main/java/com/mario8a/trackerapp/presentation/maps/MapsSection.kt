@@ -20,9 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapEffect
 import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberUpdatedMarkerState
@@ -35,7 +33,9 @@ fun MapsSection(
     modifier: Modifier = Modifier,
     currentLocation: Location?,
     isTrackingFinished: Boolean,
-    locations: List<List<LocationWithTimestamp>>
+    locations: List<List<LocationWithTimestamp>>,
+    selectedLocation: LocationWithTimestamp?,
+    onAction: (TrackingIntent) -> Unit
 ) {
     val activity = LocalActivity.current
 
@@ -43,15 +43,25 @@ fun MapsSection(
 
     val markerPosition = remember(currentLocation) {
         LatLng(
-            (currentLocation?.lat?.toFloat()?:0f).toDouble(),
-            (currentLocation?.long?.toFloat()?:0f).toDouble(),
+            (currentLocation?.lat?.toFloat() ?: 0f).toDouble(),
+            (currentLocation?.long?.toFloat() ?: 0f).toDouble(),
         )
     }
 
     val marker = rememberUpdatedMarkerState(markerPosition)
 
+    selectedLocation?.let {
+        PhotoGalleryDialog(
+            locationWithPhotos = selectedLocation,
+            onDismiss = {
+                onAction(TrackingIntent.DismissDialogLocation)
+                onAction(TrackingIntent.ResumeTracking)
+            }
+        )
+    }
+
     LaunchedEffect(true) {
-        if(currentLocation != null && !isTrackingFinished) {
+        if (currentLocation != null && !isTrackingFinished) {
             val latlng = LatLng(
                 currentLocation.lat,
                 currentLocation.long
@@ -82,22 +92,36 @@ fun MapsSection(
 //        }
 
         PolylinesSection(locations)
-        MarkerComposable(
-            state = marker
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(35.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary),
-                contentAlignment = Alignment.Center
+
+        ClusterSection(
+            locations = locations,
+            onAction = onAction
+        )
+
+        if (!isTrackingFinished && currentLocation != null) {
+
+
+            MarkerComposable(
+                state = marker,
+                onClick = {
+                    onAction(TrackingIntent.GoToCamera)
+                    true
+                }
             ) {
-                Icon(
-                    imageVector = Icons.Default.Camera,
-                    contentDescription = "Camera Icon",
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(20.dp)
-                )
+                Box(
+                    modifier = Modifier
+                        .size(35.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Camera,
+                        contentDescription = "Camera Icon",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }

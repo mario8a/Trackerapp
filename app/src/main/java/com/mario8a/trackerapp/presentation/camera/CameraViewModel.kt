@@ -37,12 +37,12 @@ class CameraViewModel @Inject constructor(
                 CameraIntent.SavePhoto -> savePhoto()
                 is CameraIntent.SubmitCameraPermissionInfo -> {
                     _uiState.value = _uiState.value.copy(
-                        showCameraRationale = cameraIntent.shouldShowCameraRationale,
+                        showCameraRationale = cameraIntent.showCameraRationale,
                         permissionGranted = cameraIntent.acceptedCameraPermission
                     )
                 }
 
-                is CameraIntent.takenPicture -> processPhoto(cameraIntent.data)
+                is CameraIntent.TakenPicture -> processPhoto(cameraIntent.data)
             }
         }
     }

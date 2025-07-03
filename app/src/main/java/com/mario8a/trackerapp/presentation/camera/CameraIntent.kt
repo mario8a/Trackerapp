@@ -3,12 +3,12 @@ package com.mario8a.trackerapp.presentation.camera
 import android.graphics.Camera
 
 sealed interface CameraIntent {
-    data class takenPicture( val data: ByteArray): CameraIntent {
+    data class TakenPicture( val data: ByteArray): CameraIntent {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (javaClass != other?.javaClass) return false
 
-            other as takenPicture
+            other as TakenPicture
 
             if (!data.contentEquals(other.data)) return false
 
@@ -23,7 +23,7 @@ sealed interface CameraIntent {
 
     data class SubmitCameraPermissionInfo(
         val acceptedCameraPermission: Boolean,
-        val shouldShowCameraRationale: Boolean
+        val showCameraRationale: Boolean
     ): CameraIntent
 
     data object SavePhoto: CameraIntent

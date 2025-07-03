@@ -37,6 +37,13 @@ fun MapScreenRoot(
     navigateToCameraScreen: () -> Unit
 ) {
     val state by trackingViewModel.state.collectAsState()
+    LaunchedEffect(key1 = true) {
+        trackingViewModel.events.collect{ event->
+            when(event){
+                is TrackingEvents.NavigateToCamera -> navigateToCameraScreen()
+            }
+        }
+    }
 
     MapScreen(
         state = state,
@@ -164,7 +171,9 @@ fun MapScreen(
                 currentLocation = state.location,
                 isTrackingFinished = false,
                 locations = state.trackingDataSegments,
-                modifier = Modifier.fillMaxSize()
+                selectedLocation = state.selectedLocation,
+                modifier = Modifier.fillMaxSize(),
+                onAction = onAction
             )
         }
     }

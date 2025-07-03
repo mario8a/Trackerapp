@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mario8a.trackerapp.domain.location.LocationTracke
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -23,6 +25,9 @@ class TrackingMapViewModel @Inject constructor (
 
     private val hasLocationPermission = MutableStateFlow(true)
     private val shouldTrack = MutableStateFlow(false)
+
+    private val _event= Channel<TrackingEvents>()
+    val events = _event.receiveAsFlow()
 
     private val _state = MutableStateFlow(TrackLocationState())
     val state = _state
@@ -120,6 +125,25 @@ class TrackingMapViewModel @Inject constructor (
                     updateState {
                         it.copy(
                             showNotificationRationale = intent.showNotificationRationale
+                        )
+                    }
+                }
+
+                TrackingIntent.GoToCamera -> {
+                    shouldTrack.value = false
+                    _event.send(TrackingEvents.NavigateToCamera)
+                }
+
+                TrackingIntent.DismissDialogLocation ->
+                    updateState {
+                        it.copy(
+                            selectedLocation = null
+                        )
+                    }
+                is TrackingIntent.SelectLocation -> {
+                    updateState {
+                        it.copy(
+                            selectedLocation = intent.location
                         )
                     }
                 }
