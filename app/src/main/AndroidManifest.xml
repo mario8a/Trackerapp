@@ -47,6 +47,9 @@
         <service android:name=".TrackitService"
             android:foregroundServiceType="location"
             />
+        
+        <receiver android:name=".data.StopReceiver"
+            android:exported="false" />
     </application>
 
 </manifest>
