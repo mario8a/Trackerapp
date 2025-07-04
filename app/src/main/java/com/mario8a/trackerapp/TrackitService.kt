@@ -89,7 +89,7 @@ class TrackitService : Service() {
                 .addAction(
                     R.drawable.ic_launcher_foreground,
                     applicationContext.getString(R.string.stop),
-                    pendingIntent
+                    stopPendingIntent
                 )
                 .build()
             startForeground(1, notification)

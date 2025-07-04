@@ -14,24 +14,26 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class StopReceiver: BroadcastReceiver() {
 
+
     @Inject
     lateinit var photoHandler: PhotoHandler
     @Inject
     lateinit var locationTracker: LocationTracke
+
     @Inject
     lateinit var applicationScope: CoroutineScope
 
     override fun onReceive(context: Context?, intent: Intent?) {
-        val receiver = intent?.action?:return
 
-        if (receiver != ACTION_STOP) {
+        val receiverAction = intent?.action ?: return
+
+        if (receiverAction != ACTION_STOP)
             return
-        }
-        else {
+        else{
             applicationScope.launch {
                 applicationScope.launch {
                     locationTracker.setIsTracking(false)
-                    locationTracker.stopObservingLocation()
+                    locationTracker.finishTracking()
                     photoHandler.clearPhotos()
                 }.join()
             }
@@ -39,10 +41,11 @@ class StopReceiver: BroadcastReceiver() {
             val serviceIntent = Intent(context, TrackitService::class.java).apply {
                 action = TrackitService.ACTION_STOP
             }
-            if(TrackitService.isServiceActive.value) {
+            if (TrackitService.isServiceActive.value) {
                 context?.startService(serviceIntent)
             }
         }
+
     }
 
     companion object{
